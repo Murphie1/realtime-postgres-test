@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { Client } from 'pg';
 
 const client = new Client({
@@ -6,9 +7,25 @@ const client = new Client({
 });
 
 async function start() {
-  await client.connect();
+  const setupClient = new Client({ connectionString: process.env.DATABASE_URL });
+  await setupClient.connect();
 
-  // Start streaming changes from our slot
+  // Ensure the test table exists
+  await setupClient.query(`
+    CREATE TABLE IF NOT EXISTS test_table (
+      id SERIAL PRIMARY KEY,
+      name TEXT
+    );
+  `);
+
+  // Insert a test row
+  await setupClient.query(`INSERT INTO test_table (name) VALUES ('hello realtime') RETURNING *;`);
+  console.log("Inserted test row into test_table.");
+
+  await setupClient.end();
+
+  // Start replication stream
+  await client.connect();
   await client.query(
     "START_REPLICATION SLOT hakima_db LOGICAL 0/0 (\"pretty-print\" '1')"
   );
@@ -26,4 +43,4 @@ async function start() {
   });
 }
 
-start();
+start().catch(console.error);
