@@ -27,7 +27,7 @@ async function start() {
   // Start replication stream
   await client.connect();
   await client.query(
-    "START_REPLICATION SLOT hakima_db LOGICAL 0/0 (\"pretty-print\" '1')"
+    "START_REPLICATION SLOT other_db LOGICAL 0/0 (\"pretty-print\" '1')"
   );
 
   client.on('copyData', (chunk) => {
